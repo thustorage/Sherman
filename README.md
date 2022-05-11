@@ -35,7 +35,7 @@ For each run:
 - In each server, execute `./benchmark kNodeCount kReadRatio kThreadCount`
 
 >  We emulate each server as one compute node and one memory node: In each server, as the compute node, 
-we launch `kReadRatio` client threads; as the memory node, we launch one memory thread.
+we launch `kThreadCount` client threads; as the memory node, we launch one memory thread.
 
 > In `./test/benchmark.cpp`, we can modify `kKeySpace` and `zipfan`, to generate different workloads.
 > In addition, we can open the macro `USE_CORO` to bind `kCoroCnt` coroutine on each client thread.
