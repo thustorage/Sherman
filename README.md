@@ -26,6 +26,7 @@ For more details, please refer to our [paper](https://arxiv.org/abs/2112.07320):
 
 - `cd Sherman`
 - `./script/hugepage.sh` to request huge pages from OS (use `./script/clear_hugepage.sh` to return huge pages)
+- change the constant ``kLockChipMemSize`` in `include/Commmon.h`, making it <= max size of on-chip memory.
 - `mkdir build; cd build; cmake ..; make -j`
 - `cp ../script/restartMemc.sh .`
 - configure `../memcached.conf`, where the 1st line is memcached IP, the 2nd is memcached port
