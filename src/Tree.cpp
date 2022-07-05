@@ -81,8 +81,8 @@ Tree::Tree(DSM *dsm, uint16_t tree_id) : dsm(dsm), tree_id(tree_id) {
 
 void Tree::print_verbose() {
 
-  constexpr int kLeafHdrOffset = STRUCT_OFFSET(LeafPage, hdr);
-  constexpr int kInternalHdrOffset = STRUCT_OFFSET(InternalPage, hdr);
+  int kLeafHdrOffset = STRUCT_OFFSET(LeafPage, hdr);
+  int kInternalHdrOffset = STRUCT_OFFSET(InternalPage, hdr);
   static_assert(kLeafHdrOffset == kInternalHdrOffset, "XXX");
 
   if (dsm->getMyNodeID() == 0) {
