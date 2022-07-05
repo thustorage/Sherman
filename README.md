@@ -31,12 +31,12 @@ For more details, please refer to our [paper](https://arxiv.org/abs/2112.07320):
 - `cp ../script/restartMemc.sh .`
 - configure `../memcached.conf`, where the 1st line is memcached IP, the 2nd is memcached port
 
-For each run:
+For each run with `kNodeCount` servers:
 - `./restartMemc.sh` (to initialize memcached server)
 - In each server, execute `./benchmark kNodeCount kReadRatio kThreadCount`
 
 >  We emulate each server as one compute node and one memory node: In each server, as the compute node, 
-we launch `kThreadCount` client threads; as the memory node, we launch one memory thread.
+we launch `kThreadCount` client threads; as the memory node, we launch one memory thread. `kReadRatio` is the ratio of `get` operations.
 
 > In `./test/benchmark.cpp`, we can modify `kKeySpace` and `zipfan`, to generate different workloads.
 > In addition, we can open the macro `USE_CORO` to bind `kCoroCnt` coroutine on each client thread.
