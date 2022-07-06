@@ -7,7 +7,7 @@ Sherman includes three techniques to boost write performance:
 - Coalescing dependent RDMA commands 
 - Two-level version layout in leaf nodes
 
-For more details, please refer to our [paper](https://arxiv.org/abs/2112.07320):
+For more details, please refer to our [paper](https://dl.acm.org/doi/abs/10.1145/3514221.3517824):
 
 [**SIGMOG'22**] Sherman: A Write-Optimized Distributed B+Tree Index on Disaggregated Memory. Qing Wang and Youyou Lu and Jiwu Shu.
 
@@ -21,12 +21,18 @@ For more details, please refer to our [paper](https://arxiv.org/abs/2112.07320):
 5. cityhash
 6. boost 1.53 (to support `boost::coroutines::symmetric_coroutine`)
 
+## Setup about RDMA Network
+
+1. You can modify this line according the RDMA NIC you want to use, where `ibv_get_device_name(deviceList[i])` is the name of RNIC (e.g., mlx5_0)
+https://github.com/thustorage/Sherman/blob/9bb950887cd066ebf4f906edbb43bae8e728548d/src/rdma/Resource.cpp#L28
+2. If you use RoCE, you should modify `gidIndex` in this line according to the shell command `show_gids`, which is usually 3.
+https://github.com/thustorage/Sherman/blob/c5ee9d85e090006df39c0afe025c8f54756a7aea/include/Rdma.h#L60
+3. Change the constant ``kLockChipMemSize`` in `include/Commmon.h`, making it <= max size of on-chip memory.
 
 ## Getting Started
 
 - `cd Sherman`
 - `./script/hugepage.sh` to request huge pages from OS (use `./script/clear_hugepage.sh` to return huge pages)
-- change the constant ``kLockChipMemSize`` in `include/Commmon.h`, making it <= max size of on-chip memory.
 - `mkdir build; cd build; cmake ..; make -j`
 - `cp ../script/restartMemc.sh .`
 - configure `../memcached.conf`, where the 1st line is memcached IP, the 2nd is memcached port
