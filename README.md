@@ -23,11 +23,23 @@ For more details, please refer to our [paper](https://dl.acm.org/doi/abs/10.1145
 
 ## Setup about RDMA Network
 
-1. You can modify this line according the RDMA NIC you want to use, where `ibv_get_device_name(deviceList[i])` is the name of RNIC (e.g., mlx5_0)
+**1. RDMA NIC Selection.** 
+
+You can modify this line according the RDMA NIC you want to use, where `ibv_get_device_name(deviceList[i])` is the name of RNIC (e.g., mlx5_0)
 https://github.com/thustorage/Sherman/blob/9bb950887cd066ebf4f906edbb43bae8e728548d/src/rdma/Resource.cpp#L28
-2. If you use RoCE, you should modify `gidIndex` in this line according to the shell command `show_gids`, which is usually 3.
+
+**2. Gid Selection.** 
+
+If you use RoCE, modify `gidIndex` in this line according to the shell command `show_gids`, which is usually 3.
 https://github.com/thustorage/Sherman/blob/c5ee9d85e090006df39c0afe025c8f54756a7aea/include/Rdma.h#L60
-3. Change the constant ``kLockChipMemSize`` in `include/Commmon.h`, making it <= max size of on-chip memory.
+
+**3. MTU Selection.** 
+
+If you use RoCE and the MTU of your NIC is not equal to 4200 (check with `ifconfig`), modify the value `path_mtu` in `src/rdma/StateTrans.cpp`
+
+**4. On-Chip Memory Size Selection.** 
+
+Change the constant ``kLockChipMemSize`` in `include/Commmon.h`, making it <= max size of on-chip memory.
 
 ## Getting Started
 
