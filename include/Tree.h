@@ -119,8 +119,8 @@ private:
   bool leaf_page_store(GlobalAddress page_addr, const Key &k, const Value &v,
                        GlobalAddress root, int level, CoroContext *cxt,
                        int coro_id, bool from_cache = false);
-  void leaf_page_del(GlobalAddress page_addr, const Key &k, int level,
-                     CoroContext *cxt, int coro_id);
+  bool leaf_page_del(GlobalAddress page_addr, const Key &k, int level,
+                     CoroContext *cxt, int coro_id, bool from_cache = false);
 
   bool acquire_local_lock(GlobalAddress lock_addr, CoroContext *cxt,
                           int coro_id);
