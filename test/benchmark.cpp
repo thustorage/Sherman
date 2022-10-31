@@ -9,35 +9,30 @@
 #include <unistd.h>
 #include <vector>
 
+
+//////////////////// workload parameters /////////////////////
+
 // #define USE_CORO
 const int kCoroCnt = 3;
-
-// #define BENCH_LOCK
-
-const int kTthreadUpper = 23;
-
-extern uint64_t cache_miss[MAX_APP_THREAD][8];
-extern uint64_t cache_hit[MAX_APP_THREAD][8];
-extern uint64_t lock_fail[MAX_APP_THREAD][8];
-extern uint64_t pattern[MAX_APP_THREAD][8];
-extern uint64_t hot_filter_count[MAX_APP_THREAD][8];
-extern uint64_t hierarchy_lock[MAX_APP_THREAD][8];
-extern uint64_t handover_count[MAX_APP_THREAD][8];
-
-const int kMaxThread = 32;
 
 int kReadRatio;
 int kThreadCount;
 int kNodeCount;
-uint64_t kKeySpace = 64 * define::MB;
+uint64_t kKeySpace = 16 * define::MB;
 double kWarmRatio = 0.8;
-
 double zipfan = 0;
 
-std::thread th[kMaxThread];
-uint64_t tp[kMaxThread][8];
+//////////////////// workload parameters /////////////////////
 
-extern volatile bool need_stop;
+
+extern uint64_t cache_miss[MAX_APP_THREAD][8];
+extern uint64_t cache_hit[MAX_APP_THREAD][8];
+
+
+
+std::thread th[MAX_APP_THREAD];
+uint64_t tp[MAX_APP_THREAD][8];
+
 extern uint64_t latency[MAX_APP_THREAD][LATENCY_WINDOWS];
 uint64_t latency_th_all[LATENCY_WINDOWS];
 
@@ -93,11 +88,10 @@ void thread_run(int id) {
 
   dsm->registerThread();
 
-#ifndef BENCH_LOCK
   uint64_t all_thread = kThreadCount * dsm->getClusterSize();
   uint64_t my_id = kThreadCount * dsm->getMyNodeID() + id;
 
-  printf("I am %d\n", my_id);
+  printf("I am %ld\n", my_id);
 
   if (id == 0) {
     bench_timer.begin();
@@ -132,11 +126,8 @@ void thread_run(int id) {
   while (warmup_cnt.load() != 0)
     ;
 
-#endif
-
 #ifdef USE_CORO
   tree->run_coroutine(coro_func, id, kCoroCnt);
-
 #else
 
   /// without coro
@@ -146,36 +137,21 @@ void thread_run(int id) {
                       (rdtsc() & (0x0000ffffffffffffull)) ^ id);
 
   Timer timer;
-  Value *value_buffer = (Value *)malloc(sizeof(Value) * 1024 * 1024);
   while (true) {
 
-    if (need_stop || id >= kTthreadUpper) {
-      while (true)
-        ;
-    }
-
     uint64_t dis = mehcached_zipf_next(&state);
-
     uint64_t key = to_key(dis);
 
     Value v;
-
     timer.begin();
 
-#ifdef BENCH_LOCK
-    if (dsm->getMyNodeID() == 0) {
-      while (true)
-        ;
-    }
-    tree->lock_bench(key);
-#else
     if (rand_r(&seed) % 100 < kReadRatio) { // GET
       tree->search(key, v);
     } else {
       v = 12;
       tree->insert(key, v);
     }
-#endif
+
     auto us_10 = timer.end() / 100;
     if (us_10 >= LATENCY_WINDOWS) {
       us_10 = LATENCY_WINDOWS - 1;
@@ -184,8 +160,8 @@ void thread_run(int id) {
 
     tp[id][0]++;
   }
-
 #endif
+
 }
 
 void parse_args(int argc, char *argv[]) {
@@ -257,13 +233,11 @@ int main(int argc, char *argv[]) {
   dsm->registerThread();
   tree = new Tree(dsm);
 
-#ifndef BENCH_LOCK
   if (dsm->getMyNodeID() == 0) {
     for (uint64_t i = 1; i < 1024000; ++i) {
       tree->insert(to_key(i), i * 2);
     }
   }
-#endif
 
   dsm->barrier("benchmark");
 
@@ -271,17 +245,11 @@ int main(int argc, char *argv[]) {
     th[i] = std::thread(thread_run, i);
   }
 
-#ifndef BENCH_LOCK
   while (!ready.load())
     ;
-#endif
 
   timespec s, e;
   uint64_t pre_tp = 0;
-  uint64_t pre_ths[MAX_APP_THREAD];
-  for (int i = 0; i < MAX_APP_THREAD; ++i) {
-    pre_ths[i] = 0;
-  }
 
   int count = 0;
 
@@ -300,12 +268,6 @@ int main(int argc, char *argv[]) {
     uint64_t cap = all_tp - pre_tp;
     pre_tp = all_tp;
 
-    for (int i = 0; i < kThreadCount; ++i) {
-      auto val = tp[i][0];
-      // printf("thread %d %ld\n", i, val - pre_ths[i]);
-      pre_ths[i] = val;
-    }
-
     uint64_t all = 0;
     uint64_t hit = 0;
     for (int i = 0; i < MAX_APP_THREAD; ++i) {
@@ -313,75 +275,20 @@ int main(int argc, char *argv[]) {
       hit += cache_hit[i][0];
     }
 
-    uint64_t fail_locks_cnt = 0;
-    for (int i = 0; i < MAX_APP_THREAD; ++i) {
-      fail_locks_cnt += lock_fail[i][0];
-      lock_fail[i][0] = 0;
-    }
-    // if (fail_locks_cnt > 500000) {
-    //   // need_stop = true;
-    // }
-
-    //  pattern
-    uint64_t pp[8];
-    memset(pp, 0, sizeof(pp));
-    for (int i = 0; i < 8; ++i) {
-      for (int t = 0; t < MAX_APP_THREAD; ++t) {
-        pp[i] += pattern[t][i];
-        pattern[t][i] = 0;
-      }
-    }
-
-    uint64_t hot_count = 0;
-    for (int i = 0; i < MAX_APP_THREAD; ++i) {
-      hot_count += hot_filter_count[i][0];
-      hot_filter_count[i][0] = 0;
-    }
-
-    uint64_t hier_count = 0;
-    for (int i = 0; i < MAX_APP_THREAD; ++i) {
-      hier_count += hierarchy_lock[i][0];
-      hierarchy_lock[i][0] = 0;
-    }
-
-    uint64_t ho_count = 0;
-    for (int i = 0; i < MAX_APP_THREAD; ++i) {
-      ho_count += handover_count[i][0];
-      handover_count[i][0] = 0;
-    }
-
     clock_gettime(CLOCK_REALTIME, &s);
 
-    if (++count % 3 == 0 && dsm->getMyNodeID() == 1) {
+    if (++count % 3 == 0 && dsm->getMyNodeID() == 0) {
       cal_latency();
     }
 
     double per_node_tp = cap * 1.0 / microseconds;
     uint64_t cluster_tp = dsm->sum((uint64_t)(per_node_tp * 1000));
-    // uint64_t cluster_we = dsm->sum((uint64_t)(hot_count));
-    // uint64_t cluster_ho = dsm->sum((uint64_t)(ho_count));
 
     printf("%d, throughput %.4f\n", dsm->getMyNodeID(), per_node_tp);
 
     if (dsm->getMyNodeID() == 0) {
       printf("cluster throughput %.3f\n", cluster_tp / 1000.0);
-
-      // printf("WE %.3f HO %.3f\n", cluster_we * 1000000ull / 1.0 /
-      // microseconds,
-      //        cluster_ho * 1000000ull / 1.0 / microseconds);
-
       printf("cache hit rate: %lf\n", hit * 1.0 / all);
-      // printf("ACCESS PATTERN");
-      // for (int i = 0; i < 8; ++i) {
-      //   printf("\t%ld", pp[i]);
-      // }
-      // printf("\n");
-      // printf("%d fail locks: %ld %s\n", dsm->getMyNodeID(), fail_locks_cnt,
-      //        getIP());
-
-      // printf("hot count %ld\t hierarchy count %ld\t handover %ld\n",
-      // hot_count,
-      //        hier_count, ho_count);
     }
   }
 

@@ -3,8 +3,6 @@
 
 #include "Connection.h"
 
-#include <gperftools/profiler.h>
-
 GlobalAddress g_root_ptr = GlobalAddress::Null();
 int g_root_level = -1;
 bool enable_cache;
