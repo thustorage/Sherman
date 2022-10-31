@@ -6,7 +6,7 @@ add_definitions(-DBOOST_COROUTINES_NO_DEPRECATION_WARNING)
 
 #Compiler options
 set(CMAKE_C_FLAGS "-Wall -Wno-deprecated-declarations -Wsign-compare -O3 -g")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11 ")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
 
 # Link Options
 set(LINKS_FLAGS "-lcityhash -lboost_system -lboost_coroutine -lpthread -libverbs -lmemcached")

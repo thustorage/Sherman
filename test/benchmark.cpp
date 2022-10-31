@@ -18,7 +18,7 @@ const int kCoroCnt = 3;
 int kReadRatio;
 int kThreadCount;
 int kNodeCount;
-uint64_t kKeySpace = 16 * define::MB;
+uint64_t kKeySpace = 64 * define::MB;
 double kWarmRatio = 0.8;
 double zipfan = 0;
 

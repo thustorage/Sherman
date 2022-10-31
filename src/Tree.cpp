@@ -360,7 +360,7 @@ void Tree::insert(const Key &k, const Value &v, CoroContext *cxt, int coro_id) {
 
   if (enable_cache) {
     GlobalAddress cache_addr;
-    auto entry = index_cache->search_from_cache(k, &cache_addr);
+    auto entry = index_cache->search_from_cache(k, &cache_addr, dsm->getMyThreadID() == 0);
     if (entry) { // cache hit
       auto root = get_root_ptr(cxt, coro_id);
       if (leaf_page_store(cache_addr, k, v, root, 0, cxt, coro_id, true)) {
@@ -417,7 +417,7 @@ bool Tree::search(const Key &k, Value &v, CoroContext *cxt, int coro_id) {
   const CacheEntry *entry = nullptr;
   if (enable_cache) {
     GlobalAddress cache_addr;
-    entry = index_cache->search_from_cache(k, &cache_addr);
+    entry = index_cache->search_from_cache(k, &cache_addr, dsm->getMyThreadID() == 0);
     if (entry) { // cache hit
       cache_hit[dsm->getMyThreadID()][0]++;
       from_cache = true;
@@ -630,10 +630,6 @@ re_read:
 
     if (result.level == 1 && enable_cache) {
       index_cache->add_to_cache(page);
-      // if (enter_debug) {
-      //   printf("add %lud [%lud %lud]\n", k, page->hdr.lowest,
-      //          page->hdr.highest);
-      // }
     }
 
     if (k >= page->hdr.highest) { // should turn right

@@ -8,15 +8,6 @@ struct CacheEntry {
   Key from;
   Key to; // [from, to]
   mutable InternalPage *ptr;
-  // mutable std::atomic<InternalPage *> ptr;
-
-  // CacheEntry() = default;
-
-  // CacheEntry(const CacheEntry &p) {
-  //   from = p.from;
-  //   to = p.to;
-  //   ptr = p.ptr.load(std::memory_order_relaxed);
-  // }
 }
  __attribute__((packed));
 

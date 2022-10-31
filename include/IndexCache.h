@@ -4,9 +4,11 @@
 #include "CacheEntry.h"
 #include "HugePageAlloc.h"
 #include "Timer.h"
+#include "WRLock.h"
 #include "third_party/inlineskiplist.h"
 
 #include <atomic>
+#include <queue>
 #include <vector>
 
 extern bool enter_debug;
@@ -19,7 +21,8 @@ public:
   IndexCache(int cache_size);
 
   bool add_to_cache(InternalPage *page);
-  const CacheEntry *search_from_cache(const Key &k, GlobalAddress *addr);
+  const CacheEntry *search_from_cache(const Key &k, GlobalAddress *addr,
+                                      bool is_leader = false);
 
   void search_range_from_cache(const Key &from, const Key &to,
                                std::vector<InternalPage *> &result);
@@ -41,6 +44,9 @@ private:
   std::atomic<int64_t> free_page_cnt;
   std::atomic<int64_t> skiplist_node_cnt;
   int64_t all_page_cnt;
+
+  std::queue<std::pair<void *, uint64_t>> delay_free_list;
+  WRLock free_lock;
 
   // SkipList
   CacheSkipList *skiplist;
@@ -83,13 +89,6 @@ inline const CacheEntry *IndexCache::find_entry(const Key &from,
   iter.Seek((char *)&e);
   if (iter.Valid()) {
     auto val = (const CacheEntry *)iter.key();
-    // while (val->ptr == nullptr) {
-    //   iter.Next();
-    //   if (!iter.Valid()) {
-    //     return nullptr;
-    //   }
-    //   val = (const CacheEntry *)iter.key();
-    // }
     return val;
   } else {
     return nullptr;
@@ -119,9 +118,6 @@ inline bool IndexCache::add_to_cache(InternalPage *page) {
       auto ptr = e->ptr;
       if (ptr == nullptr &&
           __sync_bool_compare_and_swap(&(e->ptr), 0ull, new_page)) {
-        // if (enter_debug) {
-        //   page->verbose_debug();
-        // }
         auto v = free_page_cnt.fetch_add(-1);
         if (v <= 0) {
           evict_one();
@@ -136,16 +132,27 @@ inline bool IndexCache::add_to_cache(InternalPage *page) {
 }
 
 inline const CacheEntry *IndexCache::search_from_cache(const Key &k,
-                                                       GlobalAddress *addr) {
+                                                       GlobalAddress *addr,
+                                                       bool is_leader) {
+
+  if (is_leader &&
+      !delay_free_list.empty()) { // try to free a page in the delay-free-list
+    auto p = delay_free_list.front();
+    if (asm_rdtsc() - p.second > 3000ull * 10) {
+      free(p.first);
+      free_page_cnt.fetch_add(1);
+
+      free_lock.wLock();
+      delay_free_list.pop();
+      free_lock.wUnlock();
+    }
+  }
+
   auto entry = find_entry(k);
 
   InternalPage *page = entry ? entry->ptr : nullptr;
 
   if (page && entry->from <= k && entry->to >= k) {
-
-    // if (enter_debug) {
-    //   page->verbose_debug();
-    // }
 
     page->index_cache_freq++;
 
@@ -169,7 +176,6 @@ inline const CacheEntry *IndexCache::search_from_cache(const Key &k,
 
     compiler_barrier();
     if (entry->ptr) { // check if it is freed.
-      // printf("Cache HIt\n");
       return entry;
     }
   }
@@ -208,8 +214,10 @@ inline bool IndexCache::invalidate(const CacheEntry *entry) {
   }
 
   if (__sync_bool_compare_and_swap(&(entry->ptr), ptr, 0)) {
-    free(ptr);
-    free_page_cnt.fetch_add(1);
+
+    free_lock.wLock();
+    delay_free_list.push(std::make_pair(ptr, asm_rdtsc()));
+    free_lock.wUnlock();
     return true;
   }
 
