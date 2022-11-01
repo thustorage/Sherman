@@ -202,8 +202,6 @@ next:
   // }
 }
 
-GlobalAddress Tree::query_cache(const Key &k) { return GlobalAddress::Null(); }
-
 inline bool Tree::try_lock_addr(GlobalAddress lock_addr, uint64_t tag,
                                 uint64_t *buf, CoroContext *cxt, int coro_id) {
 
