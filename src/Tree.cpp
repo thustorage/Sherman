@@ -458,7 +458,6 @@ next:
   }
 }
 
-// TODO: Need Fix
 uint64_t Tree::range_query(const Key &from, const Key &to, Value *value_buffer,
                            CoroContext *cxt, int coro_id) {
 
@@ -469,7 +468,8 @@ uint64_t Tree::range_query(const Key &from, const Key &to, Value *value_buffer,
   result.clear();
   leaves.clear();
   index_cache->search_range_from_cache(from, to, result);
-
+  
+  // FIXME: here, we assume all innernal nodes are cached in compute node
   if (result.empty()) {
     return 0;
   }
@@ -497,9 +497,6 @@ uint64_t Tree::range_query(const Key &from, const Key &to, Value *value_buffer,
       leaves.push_back(page->records[cnt - 1].ptr);
     }
   }
-
-  // printf("---- %d ----\n", leaves.size());
-  // sleep(1);
 
   int cq_cnt = 0;
   char *range_buffer = (dsm->get_rbuf(coro_id)).get_range_buffer();

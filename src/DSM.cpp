@@ -48,6 +48,7 @@ DSM::DSM(const DSMConfig &conf)
 
   initRDMAConnection();
 
+  Debug::notifyInfo("number of threads on memory node: %d", NR_DIRECTORY);
   for (int i = 0; i < NR_DIRECTORY; ++i) {
     dirAgent[i] =
         new Directory(dirCon[i], remoteInfo, conf.machineNR, i, myNodeID);
@@ -79,7 +80,7 @@ void DSM::registerThread() {
 
 void DSM::initRDMAConnection() {
 
-  Debug::notifyInfo("Machine NR: %d", conf.machineNR);
+  Debug::notifyInfo("number of servers (colocated MN/CN): %d", conf.machineNR);
 
   remoteInfo = new RemoteConnection[conf.machineNR];
 

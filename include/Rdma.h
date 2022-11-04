@@ -15,7 +15,6 @@
 
 #include "Debug.h"
 
-#define MAX_POST_LIST 32
 #define DCT_ACCESS_KEY 3185
 #define UD_PKEY 0x11111111
 #define PSN 3185

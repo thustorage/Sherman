@@ -194,7 +194,7 @@ constexpr int kLeafCardinality =
     (kLeafPageSize - sizeof(Header) - sizeof(uint8_t) * 2) / sizeof(LeafEntry);
 
 class InternalPage {
-  // private:
+private:
   union {
     uint32_t crc;
     uint64_t embedding_lock;
@@ -255,9 +255,7 @@ public:
     succ = cal_crc == this->crc;
 #endif
     succ = succ && (rear_version == front_version);
-    if (!succ) {
-      // this->debug();
-    }
+
     return succ;
   }
 
@@ -323,9 +321,6 @@ public:
 #endif
 
     succ = succ && (rear_version == front_version);
-    if (!succ) {
-      // this->debug();
-    }
 
     return succ;
   }

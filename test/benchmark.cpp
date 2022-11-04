@@ -91,7 +91,7 @@ void thread_run(int id) {
   uint64_t all_thread = kThreadCount * dsm->getClusterSize();
   uint64_t my_id = kThreadCount * dsm->getMyNodeID() + id;
 
-  printf("I am %ld\n", my_id);
+  printf("I am thread %ld on compute nodes\n", my_id);
 
   if (id == 0) {
     bench_timer.begin();

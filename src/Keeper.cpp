@@ -75,7 +75,7 @@ void Keeper::serverEnter() {
 
       myNodeID = serverNum - 1;
 
-      printf("I am servers %d [%s]\n", myNodeID, getIP());
+      printf("I am server %d\n", myNodeID);
       return;
     }
     fprintf(stderr, "Server %d Counld't incr value and get ID: %s, retry...\n",
