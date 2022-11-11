@@ -17,7 +17,12 @@ class Directory;
 class DSM {
 
 public:
+  // obtain netowrk resources for a thread
   void registerThread();
+
+  // clear the network resources for all threads
+  void resetThread() { appID.store(0); }
+
   static DSM *getInstance(const DSMConfig &conf);
 
   uint16_t getMyNodeID() { return myNodeID; }
@@ -47,9 +52,8 @@ public:
   void write_faa_sync(RdmaOpRegion &write_ror, RdmaOpRegion &faa_ror,
                       uint64_t add_val, CoroContext *ctx = nullptr);
 
-  void write_cas(RdmaOpRegion &write_ror, RdmaOpRegion &cas_ror,
-                 uint64_t equal, uint64_t val, bool signal = true,
-                 CoroContext *ctx = nullptr);
+  void write_cas(RdmaOpRegion &write_ror, RdmaOpRegion &cas_ror, uint64_t equal,
+                 uint64_t val, bool signal = true, CoroContext *ctx = nullptr);
   void write_cas_sync(RdmaOpRegion &write_ror, RdmaOpRegion &cas_ror,
                       uint64_t equal, uint64_t val, CoroContext *ctx = nullptr);
 

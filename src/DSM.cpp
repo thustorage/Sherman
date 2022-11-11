@@ -61,6 +61,8 @@ DSM::~DSM() {}
 
 void DSM::registerThread() {
 
+  static bool has_init[MAX_APP_THREAD];
+
   if (thread_id != -1)
     return;
 
@@ -69,8 +71,13 @@ void DSM::registerThread() {
 
   iCon = thCon[thread_id];
 
-  iCon->message->initRecv();
-  iCon->message->initSend();
+  if (!has_init[thread_id]) {
+    iCon->message->initRecv();
+    iCon->message->initSend();
+
+    has_init[thread_id] = true;
+  }
+
   rdma_buffer = (char *)cache.data + thread_id * 12 * define::MB;
 
   for (int i = 0; i < define::kMaxCoro; ++i) {

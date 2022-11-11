@@ -134,7 +134,7 @@ inline bool IndexCache::add_to_cache(InternalPage *page) {
 inline const CacheEntry *IndexCache::search_from_cache(const Key &k,
                                                        GlobalAddress *addr,
                                                        bool is_leader) {
-
+  // notice: please ensure the thread 0 can make progress
   if (is_leader &&
       !delay_free_list.empty()) { // try to free a page in the delay-free-list
     auto p = delay_free_list.front();

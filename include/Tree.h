@@ -186,12 +186,13 @@ public:
   }
 } __attribute__((packed));
 
-constexpr int kInternalCardinality =
-    (kInternalPageSize - sizeof(Header) - sizeof(uint8_t) * 2) /
-    sizeof(InternalEntry);
+constexpr int kInternalCardinality = (kInternalPageSize - sizeof(Header) -
+                                      sizeof(uint8_t) * 2 - sizeof(uint64_t)) /
+                                     sizeof(InternalEntry);
 
 constexpr int kLeafCardinality =
-    (kLeafPageSize - sizeof(Header) - sizeof(uint8_t) * 2) / sizeof(LeafEntry);
+    (kLeafPageSize - sizeof(Header) - sizeof(uint8_t) * 2 - sizeof(uint64_t)) /
+    sizeof(LeafEntry);
 
 class InternalPage {
 private:
@@ -205,7 +206,7 @@ private:
   Header hdr;
   InternalEntry records[kInternalCardinality];
 
-  uint8_t padding[3];
+  // uint8_t padding[3];
   uint8_t rear_version;
 
   friend class Tree;
@@ -286,7 +287,7 @@ private:
   Header hdr;
   LeafEntry records[kLeafCardinality];
 
-  uint8_t padding[1];
+  // uint8_t padding[1];
   uint8_t rear_version;
 
   friend class Tree;

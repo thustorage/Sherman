@@ -240,6 +240,7 @@ int main(int argc, char *argv[]) {
   }
 
   dsm->barrier("benchmark");
+  dsm->resetThread();
 
   for (int i = 0; i < kThreadCount; i++) {
     th[i] = std::thread(thread_run, i);
