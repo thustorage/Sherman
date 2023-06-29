@@ -59,5 +59,9 @@ we launch `kThreadCount` client threads; as the memory node, we launch one memor
 > In `./test/benchmark.cpp`, we can modify `kKeySpace` and `zipfan`, to generate different workloads.
 > In addition, we can open the macro `USE_CORO` to bind `kCoroCnt` coroutine on each client thread.
 
+## Known bugs
+
+- The two-level version may induce inconsistency in some concurrent cases. Refer to [this SIGMOD'23 paper](https://dl.acm.org/doi/10.1145/3589276)
+
 ## TODO
 - Re-write `delete` operations
