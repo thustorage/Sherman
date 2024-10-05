@@ -12,6 +12,10 @@ For more details, please refer to our [paper](https://dl.acm.org/doi/abs/10.1145
 [**SIGMOG'22**] Sherman: A Write-Optimized Distributed B+Tree Index on Disaggregated Memory. Qing Wang and Youyou Lu and Jiwu Shu.
 
 
+## Update (2024.10)
+Please use [Deft](https://github.com/thustorage/deft) for evaluation, which improving Sherman in performance and correct synchronization.
+
+
 ## System Requirements
 
 1. Mellanox ConnectX-5 NICs and above
